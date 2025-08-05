@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts (will be built in container)
+# Note: Commenting out golib.so and golib.h since they're built in the container
+# golib.so
+# golib.h
+
+# Documentation
+README.md
+
+# IDE
+.vscode
+.idea
+
+# Temporary files
+*.tmp
+*.log

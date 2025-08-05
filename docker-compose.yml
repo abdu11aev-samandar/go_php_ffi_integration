@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Main application service (multi-stage build)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-php-ffi-app
+    command: php test_ffi.php
+    
+  # Development mode with shell access (library already built)
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-php-ffi-dev
+    working_dir: /app
+    tty: true
+    stdin_open: true
+    command: /bin/bash
+    
+  # Live development with source mounting and rebuild capability
+  dev-live:
+    image: golang:1.21-bullseye
+    container_name: go-php-ffi-dev-live
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    tty: true
+    stdin_open: true
+    command: bash -c "apt-get update && apt-get install -y php-cli php-dev gcc libc6-dev libffi-dev make && php -m | grep -i ffi || (docker-php-ext-install ffi && docker-php-ext-enable ffi) && echo 'ffi.enable=1' > /usr/local/etc/php/conf.d/ffi.ini || echo 'Ready for development' && bash"
+    
+  # Build and test service
+  test:
+    build: .
+    container_name: go-php-ffi-test
+    command: php test_ffi.php
+    
+  # Standalone Go library builder
+  go-build:
+    image: golang:1.21-alpine
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: sh -c "apk add --no-cache gcc musl-dev && go build -buildmode=c-shared -o golib.so main.go"
+    container_name: go-builder
